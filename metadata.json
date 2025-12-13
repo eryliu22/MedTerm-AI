@@ -1,0 +1,5 @@
+{
+  "name": "MedTerm AI - Crowdsourced Medical Translator",
+  "description": "An intelligent medical terminology translator that learns from user feedback using Gemini AI.",
+  "requestFramePermissions": []
+}
