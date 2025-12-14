@@ -6,14 +6,8 @@ const ACTIVITY_KEY = 'medterm_activity';
 // Helper to get all data
 const getDb = (): Record<string, TermData> => {
   try {
-    const raw = localStorage.getItem(VOTES_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return typeof parsed === 'object' && parsed !== null ? parsed : {};
-  } catch (error) {
-    console.error("Failed to parse storage data:", error);
-    return {};
-  }
+    return JSON.parse(localStorage.getItem(VOTES_KEY) || '{}');
+  } catch { return {}; }
 };
 
 // Helper to save data
@@ -40,16 +34,12 @@ export const mergeAndRankResults = (originalTerm: string, aiResults: AiResponse 
 
   // 1. Convert AI Results to Candidates
   if (aiResults) {
-    const mapToItem = (key: 'literal' | 'clinical' | 'descriptive', cat: TranslationCategory): TranslationItem | null => {
-      const t = aiResults[key];
-      if (!t || !t.term || !t.context) {
-        console.warn(`Missing data for ${key} translation`);
-        return null;
-      }
+    const mapToItem = (key: string, cat: TranslationCategory): TranslationItem => {
+      const t = (aiResults as any)[key];
       // Check if we have stored data for this specific term
       // We search keys case-insensitively to match existing DB entries if possible
       const dbKey = Object.keys(history).find(k => k.toLowerCase() === t.term.toLowerCase()) || t.term;
-      const stored = history[dbKey] || { selects: 0, rejects: 0, origin: 'AI' as const };
+      const stored = history[dbKey] || { selects: 0, rejects: 0, origin: 'AI' };
       
       return {
         id: dbKey, // Use the key that matches DB if exists, otherwise AI term
@@ -63,13 +53,9 @@ export const mergeAndRankResults = (originalTerm: string, aiResults: AiResponse 
     };
 
     // Priority order for deduplication: Clinical -> Literal -> Descriptive
-    const clinical = mapToItem('clinical', TranslationCategory.CLINICAL);
-    const literal = mapToItem('literal', TranslationCategory.LITERAL);
-    const descriptive = mapToItem('descriptive', TranslationCategory.DESCRIPTIVE);
-    
-    if (clinical) addCandidate(clinical);
-    if (literal) addCandidate(literal);
-    if (descriptive) addCandidate(descriptive);
+    addCandidate(mapToItem('clinical', TranslationCategory.CLINICAL));
+    addCandidate(mapToItem('literal', TranslationCategory.LITERAL));
+    addCandidate(mapToItem('descriptive', TranslationCategory.DESCRIPTIVE));
   }
 
   // 2. Add User Suggestions from History
@@ -209,13 +195,8 @@ export const addUserSuggestion = (originalTerm: string, suggestion: string) => {
 const getRecentActivityRaw = (): RecentActivityItem[] => {
   try {
     const raw = localStorage.getItem(ACTIVITY_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.error("Failed to parse recent activity:", error);
-    return [];
-  }
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
 };
 
 const saveRecentActivityRaw = (list: RecentActivityItem[]) => {

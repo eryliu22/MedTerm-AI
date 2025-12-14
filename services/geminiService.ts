@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { AiResponse } from "../types";
 
-const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+const apiKey = process.env.API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
 
 const translationSchema: Schema = {
@@ -86,12 +86,7 @@ export const fetchMedicalTranslation = async (inputTerm: string): Promise<AiResp
     });
 
     if (response.text) {
-      try {
-        return JSON.parse(response.text) as AiResponse;
-      } catch (parseError) {
-        console.error("Failed to parse AI response:", parseError);
-        throw new Error("Invalid response format from AI service");
-      }
+      return JSON.parse(response.text) as AiResponse;
     }
     return null;
 
