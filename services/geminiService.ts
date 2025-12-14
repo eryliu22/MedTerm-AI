@@ -1,7 +1,17 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { AiResponse } from "../types";
 
-const apiKey = process.env.API_KEY || '';
+// Safe access to process.env to prevent browser crashes if it's undefined
+const getApiKey = () => {
+  try {
+    return process.env.API_KEY || '';
+  } catch (e) {
+    console.warn("process.env.API_KEY is not defined");
+    return '';
+  }
+};
+
+const apiKey = getApiKey();
 const ai = new GoogleGenAI({ apiKey });
 
 const translationSchema: Schema = {
@@ -42,7 +52,7 @@ const translationSchema: Schema = {
 
 export const fetchMedicalTranslation = async (inputTerm: string): Promise<AiResponse | null> => {
   if (!apiKey) {
-    console.error("API Key is missing");
+    console.error("API Key is missing. Please set API_KEY in your environment variables.");
     throw new Error("Gemini API Key is missing");
   }
 
